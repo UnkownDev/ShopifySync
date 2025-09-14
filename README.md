@@ -255,3 +255,88 @@ When using convex, make sure:
 - This includes importing generated files like `@/convex/_generated/server`, `@/convex/_generated/api`
 - Remember to import functions like useQuery, useMutation, useAction, etc. from `convex/react`
 - NEVER have return type validators.
+
+# Documentation
+
+## Assumptions
+- Shopify APIs provide structured and consistent customer, order, and product data.
+- Users have a stable internet connection and modern browsers to access the dashboard.
+- The app handles small-to-medium datasets; large datasets may require caching and pagination.
+- Authentication is set up with email OTP and ensures isolation of tenant data.
+
+## High-Level Architecture
+```
+[User Browser] ---> [Frontend: React + Vite + Tailwind + Shadcn + Framer Motion]
+         |                  |
+         v                  v
+ [Convex Backend + Convex Auth] ---> [Shopify API / Data Source]
+         |
+         v
+ [Database: Convex Tables for Orders, Customers, Products]
+```
+- **Frontend**: Displays dashboard, charts, and handles authentication.
+- **Backend**: Fetches data from Shopify, aggregates insights, exposes APIs.
+- **Database**: Stores tenants’ isolated data (customers, orders, products).
+- **Auth**: Ensures secure login with email OTP.
+
+## APIs and Data Models
+
+### APIs
+- `/api/customers` → List customers
+- `/api/orders?dateRange=...` → Orders with date filtering
+- `/api/products` → Product data and top sellers
+- `/api/insights` → Aggregated metrics (revenue, total orders, top 5 customers)
+
+### Data Models
+**Customer**
+```
+{
+  id: string,
+  name: string,
+  email: string,
+  createdAt: Date,
+  totalSpent: number,
+  ordersCount: number
+}
+```
+
+**Order**
+```
+{
+  id: string,
+  customerId: string,
+  totalPrice: number,
+  createdAt: Date,
+  status: string
+}
+```
+
+**Product**
+```
+{
+  id: string,
+  title: string,
+  price: number,
+  sku: string,
+  inventoryCount: number
+}
+```
+
+**Metrics**
+```
+{
+  totalRevenue: number,
+  totalOrders: number,
+  totalCustomers: number,
+  topCustomers: Array<Customer>,
+  salesTrend: Array<{ date: Date, revenue: number }>
+}
+```
+
+## Next Steps to Productionize
+- Implement caching and pagination to handle large datasets.
+- Add monitoring, error logging, and retry mechanisms for API failures.
+- Harden authentication with role-based authorization and secure storage.
+- Add support for Shopify webhooks to sync real-time data (e.g., abandoned carts).
+- Set up CI/CD pipelines with automated tests.
+- Enable data export (CSV/PDF) for merchants.
